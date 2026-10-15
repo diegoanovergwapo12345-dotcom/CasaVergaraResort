@@ -1,0 +1,34 @@
+-- ============================================================
+-- Migration: notifications get an `audience` column
+--
+-- The `notifications` table targets a specific user_id, but has no way
+-- to say *why* that row was created — a guest's own "Payment verified"
+-- notification and a staff-facing "New proof of payment" alert both
+-- look identical. That's harmless for most accounts, but if a single
+-- account has both a guest history (bookings/reviews they made
+-- themselves) and admin/event_manager access, their admin Notifications
+-- page ends up showing guest-only notifications that were never meant
+-- for the admin view — and vice versa.
+--
+-- This adds:
+--   - audience: 'customer' (guest-facing) or 'staff' (admin/event_manager
+--     facing). Defaults to 'customer' since that's what almost every
+--     existing row already is.
+--
+-- api/content/my-notifications.php now filters by this column based on
+-- the *current session's role*, so:
+--   - A guest (or an admin viewing their own customer-dashboard, if they
+--     have one) only ever sees audience = 'customer' rows.
+--   - An admin/event_manager viewing the admin Notifications page only
+--     ever sees audience = 'staff' rows.
+--
+-- Safe to re-run.
+--
+-- How to run:
+--   1. Open http://localhost/phpmyadmin
+--   2. Click the "casa_vergara" database, then the "SQL" tab.
+--   3. Paste this whole file's contents and click "Go".
+-- ============================================================
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS audience ENUM('customer', 'staff') NOT NULL DEFAULT 'customer' AFTER user_id;

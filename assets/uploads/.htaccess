@@ -1,0 +1,21 @@
+# Backstop for every upload folder below this one: whatever lands here is
+# served as a file, never run as code, and directory listings are off so
+# nobody can browse other guests' receipts by guessing their way in.
+Options -Indexes
+
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+
+<FilesMatch "\.(php|phtml|php\d|pl|py|cgi|sh|asp|aspx|exe|com|bat|cmd|jar)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+  </IfModule>
+</FilesMatch>
